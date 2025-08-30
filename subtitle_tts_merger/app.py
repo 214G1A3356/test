@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, send_from_directory
+from flask import Flask, render_template, request, redirect, url_for, send_from_directory, flash
 import os
 import sys
 import pysrt
@@ -15,6 +15,7 @@ template_dir = os.path.join(application_path, 'templates')
 static_dir = os.path.join(application_path, 'static')
 
 app = Flask(__name__, template_folder=template_dir, static_folder=static_dir)
+app.secret_key = 'supersecretkey'
 app.config['UPLOAD_FOLDER'] = 'uploads'
 app.config['ALLOWED_EXTENSIONS'] = {'mp4', 'mov', 'avi', 'mkv', 'srt'}
 
@@ -70,17 +71,35 @@ def editor():
 
     return render_template('editor.html', subs=subs, video_filename=video_filename, subtitle_filename=subtitle_filename, uploaded_tts_files=uploaded_tts_files)
 
-@app.route('/upload_tts/<video_filename>/<subtitle_filename>/<int:subtitle_index>', methods=['POST'])
-def upload_tts(video_filename, subtitle_filename, subtitle_index):
-    if 'tts_audio' not in request.files:
+@app.route('/upload_multiple_tts/<video_filename>/<subtitle_filename>', methods=['POST'])
+def upload_multiple_tts(video_filename, subtitle_filename):
+    if 'tts_audios[]' not in request.files:
         return redirect(url_for('editor', video_filename=video_filename, subtitle_filename=subtitle_filename))
-    tts_audio_file = request.files['tts_audio']
-    if tts_audio_file.filename == '':
-        return redirect(url_for('editor', video_filename=video_filename, subtitle_filename=subtitle_filename))
-    if tts_audio_file:
-        tts_filename = f"tts_{video_filename.rsplit('.', 1)[0]}_{subtitle_index}.mp3"
-        tts_audio_path = os.path.join(app.config['UPLOAD_FOLDER'], tts_filename)
-        tts_audio_file.save(tts_audio_path)
+
+    files = request.files.getlist('tts_audios[]')
+
+    for file in files:
+        if file.filename == '':
+            continue
+        if file:
+            try:
+                # Extract index from filename e.g. "1.wav" -> 1
+                subtitle_index = int(file.filename.split('.')[0])
+
+                tts_filename = f"tts_{video_filename.rsplit('.', 1)[0]}_{subtitle_index}.mp3"
+                tts_audio_path = os.path.join(app.config['UPLOAD_FOLDER'], tts_filename)
+
+                # Save the file, converting to mp3 if necessary
+                audio = AudioSegment.from_file(file)
+                audio.export(tts_audio_path, format="mp3")
+
+            except (ValueError, IndexError):
+                # Handle cases where filename is not a valid number
+                # Or where there is no extension.
+                # Maybe log this and continue
+                pass
+
+    flash('TTS audio files uploaded successfully!')
     return redirect(url_for('editor', video_filename=video_filename, subtitle_filename=subtitle_filename))
 
 

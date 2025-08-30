@@ -10,6 +10,33 @@
     <div class="container">
       <h1 class="mt-5">Subtitle Editor</h1>
       <p class="lead">Video: {{ video_filename }}</p>
+
+      {% with messages = get_flashed_messages() %}
+        {% if messages %}
+          <div class="alert alert-success">
+            <ul>
+            {% for message in messages %}
+              <li>{{ message }}</li>
+            {% endfor %}
+            </ul>
+          </div>
+        {% endif %}
+      {% endwith %}
+
+      <hr>
+
+      <h2>Upload TTS Audio Files</h2>
+      <p>Select all your TTS audio files to upload them at once. Please make sure your audio files are named numerically to match the subtitle number (e.g., <code>1.wav</code>, <code>2.mp3</code>, etc.).</p>
+      <form action="{{ url_for('upload_multiple_tts', video_filename=video_filename, subtitle_filename=subtitle_filename) }}" method="post" enctype="multipart/form-data">
+        <div class="form-group">
+          <input type="file" class="form-control-file" name="tts_audios[]" multiple required>
+        </div>
+        <button type="submit" class="btn btn-primary">Upload Audios</button>
+      </form>
+
+      <hr>
+
+      <h2>Subtitles</h2>
       <table class="table">
         <thead>
           <tr>
@@ -17,7 +44,7 @@
             <th scope="col">Start Time</th>
             <th scope="col">End Time</th>
             <th scope="col">Text</th>
-            <th scope="col">TTS Audio</th>
+            <th scope="col">TTS Audio Status</th>
           </tr>
         </thead>
         <tbody>
@@ -29,12 +56,9 @@
             <td>{{ sub.text }}</td>
             <td>
               {% if sub.index in uploaded_tts_files %}
-                <span class="text-success">TTS Uploaded</span>
+                <span class="text-success">Uploaded</span>
               {% else %}
-                <form action="{{ url_for('upload_tts', video_filename=video_filename, subtitle_filename=subtitle_filename, subtitle_index=sub.index) }}" method="post" enctype="multipart/form-data">
-                  <input type="file" name="tts_audio" accept="audio/*" required>
-                  <button type="submit" class="btn btn-sm btn-primary">Upload</button>
-                </form>
+                <span class="text-danger">Missing</span>
               {% endif %}
             </td>
           </tr>

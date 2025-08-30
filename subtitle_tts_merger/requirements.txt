@@ -1,0 +1,4 @@
+Flask
+pysrt
+pydub
+moviepy

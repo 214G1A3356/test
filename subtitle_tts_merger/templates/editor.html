@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>Subtitle Editor</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  </head>
+  <body>
+    <div class="container">
+      <h1 class="mt-5">Subtitle Editor</h1>
+      <p class="lead">Video: {{ video_filename }}</p>
+      <table class="table">
+        <thead>
+          <tr>
+            <th scope="col">#</th>
+            <th scope="col">Start Time</th>
+            <th scope="col">End Time</th>
+            <th scope="col">Text</th>
+            <th scope="col">TTS Audio</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for sub in subs %}
+          <tr>
+            <th scope="row">{{ sub.index }}</th>
+            <td>{{ sub.start }}</td>
+            <td>{{ sub.end }}</td>
+            <td>{{ sub.text }}</td>
+            <td>
+              {% if sub.index in uploaded_tts_files %}
+                <span class="text-success">TTS Uploaded</span>
+              {% else %}
+                <form action="{{ url_for('upload_tts', video_filename=video_filename, subtitle_filename=subtitle_filename, subtitle_index=sub.index) }}" method="post" enctype="multipart/form-data">
+                  <input type="file" name="tts_audio" accept="audio/*" required>
+                  <button type="submit" class="btn btn-sm btn-primary">Upload</button>
+                </form>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      <form action="{{ url_for('generate_audio', video_filename=video_filename, subtitle_filename=subtitle_filename) }}" method="post">
+        <button type="submit" class="btn btn-success">Generate Final Audio</button>
+      </form>
+    </div>
+  </body>
+</html>

@@ -1,11 +1,20 @@
 from flask import Flask, render_template, request, redirect, url_for, send_from_directory
 import os
+import sys
 import pysrt
 from pydub import AudioSegment
 from moviepy.editor import VideoFileClip
 from werkzeug.utils import secure_filename
 
-app = Flask(__name__)
+if getattr(sys, 'frozen', False):
+    application_path = sys._MEIPASS
+else:
+    application_path = os.path.dirname(os.path.abspath(__file__))
+
+template_dir = os.path.join(application_path, 'templates')
+static_dir = os.path.join(application_path, 'static')
+
+app = Flask(__name__, template_folder=template_dir, static_folder=static_dir)
 app.config['UPLOAD_FOLDER'] = 'uploads'
 app.config['ALLOWED_EXTENSIONS'] = {'mp4', 'mov', 'avi', 'mkv', 'srt'}
 
